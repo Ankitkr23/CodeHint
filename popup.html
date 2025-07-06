@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeHint AI</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and scrollbar */
+        body {
+            font-family: "Inter", sans-serif;
+            width: 200px; /* Increased width for better layout */
+            min-height: 250px; /* Increased minimum height */
+            display: flex;
+            flex-direction: column;
+            background-color: #f0f4f8; /* Lighter, more pleasant background */
+            color: #334155; /* Darker text for better readability */
+        }
+        /* Custom scrollbar for chat history */
+        .chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-history::-webkit-scrollbar-track {
+            background: #cbd5e1; /* Light gray track */
+            border-radius: 10px;
+        }
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #64748b; /* Medium gray thumb */
+            border-radius: 10px;
+        }
+        .chat-history::-webkit-scrollbar-thumb:hover {
+            background: #475569; /* Darker gray on hover */
+        }
+        /* Hide default hint display initially */
+        #hint {
+            display: none;
+        }
+        #loading {
+            display: none; /* Hide loading spinner by default */
+        }
+        /* Button hover and active states */
+        .btn-primary {
+            @apply bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+        }
+        .btn-secondary {
+            @apply bg-purple-600 hover:bg-purple-700 focus:ring-purple-500;
+        }
+        .btn-tertiary {
+            @apply bg-green-600 hover:bg-green-700 focus:ring-green-500;
+        }
+        .btn-quaternary {
+            @apply bg-red-600 hover:bg-red-700 focus:ring-red-500;
+        }
+    </style>
+</head>
+<body class="p-5 flex flex-col items-center justify-between min-h-screen">
+    <div class="w-full flex flex-col flex-grow">
+        <!-- Header Section -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900 leading-tight">CodeHint AI</h1>
+            <p class="text-md text-gray-600 mt-1">Your smart coding assistant</p>
+        </div>
+
+        <!-- Chat History Area -->
+        <div id="chat-history" class="chat-history flex-grow overflow-y-auto bg-white p-4 rounded-xl shadow-lg mb-4 border border-gray-200" style="max-height: 350px;">
+            <!-- Chat messages will be appended here by popup.js -->
+            <div class="text-gray-500 text-sm text-center mb-2">Start by typing your question or clicking a button below!</div>
+        </div>
+
+        <!-- Loading Indicator (Spinner) -->
+        <div id="loading" class="text-center py-3">
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p class="text-gray-600 text-sm mt-2">Generating...</p>
+        </div>
+
+        <!-- Input and Action Buttons -->
+        <div class="w-full flex flex-col gap-3">
+            <textarea id="user-input"
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none text-base shadow-sm"
+                      rows="3"
+                      placeholder="Type your question or context here..."></textarea>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button id="get-hint-button"
+                        class="flex-1 py-3 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition duration-200 text-base font-semibold btn-primary">
+                    Get Hint
+                </button>
+            
+                <button id="get-time-complexity-button"
+                        class="flex-1 py-3 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition duration-200 text-base font-semibold btn-tertiary">
+                    Time Complexity
+                </button>
+                <button id="get-space-complexity-button"
+                        class="flex-1 py-3 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition duration-200 text-base font-semibold btn-quaternary">
+                    Space Complexity
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Original hint display (kept for compatibility, though now integrated into chat) -->
+    <div id="hint" class="hidden text-gray-800 p-3 mt-4 bg-white rounded-lg shadow-md w-full text-sm"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
