@@ -5,7 +5,8 @@
   "description": "Get helpful hints and solutions for coding problems based on your code.",
   "permissions": [
     "activeTab",
-    "scripting" 
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
@@ -22,6 +23,17 @@
       "128": "icons/icon128.png"
     }
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://leetcode.com/*",
+        "https://www.geeksforgeeks.org/*",
+        "https://codeforces.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

@@ -37,10 +37,20 @@ app.use(express.json());
 app.post('/get-hint', async (req, res) => {
     // Extract questionName, userCode, requestType, and userContext from the request body
     const { questionName, userCode, requestType, userContext } = req.body;
-    console.log('Received Request:', { questionName, requestType, hasCode: !!userCode, userContext });
+    
+    // Enhanced logging
+    console.log('\n=== New Request ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Question:', questionName);
+    console.log('Request Type:', requestType || 'hint');
+    console.log('Has User Code:', !!userCode);
+    console.log('Code Length:', userCode ? userCode.length : 0);
+    console.log('User Context:', userContext || 'none');
+    console.log('==================');
 
     // Validate if questionName is provided
     if (!questionName) {
+        console.error('❌ Error: No question name provided');
         return res.status(400).json({ error: 'No question name provided' });
     }
 
@@ -57,69 +67,87 @@ app.post('/get-hint', async (req, res) => {
         // Construct the prompt based on request type and presence of user code
         switch (requestType) {
             case 'hint':
-                prompt = `I am working on the LeetCode problem titled "${formattedQuestion}".`;
-                if (userCode) {
-                    prompt += ` My current code attempt is:\n\`\`\`\n${userCode}\n\`\`\`\n`;
-                    prompt += `Please provide a very concise hint (max 10 words) that helps me move forward, focusing on my existing code if possible. Do NOT provide the full solution or intuition. Just a small nudge.`;
+                if (userCode && userCode.trim()) {
+                    prompt = `Code for "${formattedQuestion}":
+\`\`\`
+${userCode}
+\`\`\`
+
+Give a VERY SHORT hint (max 10-12 words) about what's missing or wrong. No explanations.`;
                 } else {
-                    prompt += ` I haven't written any code yet. Please provide a very concise hint (max 10 words) for solving this problem. Do NOT provide the full solution or intuition. Just a small nudge.`;
+                    prompt = `Problem: "${formattedQuestion}". Give a VERY SHORT hint (max 10-12 words) about the approach. No explanations.`;
                 }
                 if (userContext) {
-                    prompt += ` Additional context: "${userContext}".`;
+                    prompt += ` Context: "${userContext}".`;
                 }
-                prompt += ` Hint:`;
                 break;
 
-
             case 'time-complexity':
-                prompt = `I am working on the LeetCode problem titled "${formattedQuestion}".`;
-                if (userCode) {
-                    prompt += ` My current code attempt is:\n\`\`\`\n${userCode}\n\`\`\`\n`;
-                    prompt += `Analyze the time complexity of the provided code for this problem. Explain it concisely using Big O notation.`;
+                if (userCode && userCode.trim()) {
+                    prompt = `Code for "${formattedQuestion}":
+\`\`\`
+${userCode}
+\`\`\`
+
+Response format: "Time Complexity: O(n²)" - ONLY the Big O notation, no explanation.`;
                 } else {
-                    prompt += ` What is the typical time complexity for solving the LeetCode problem "${formattedQuestion}"? Explain it concisely using Big O notation.`;
+                    prompt = `Problem: "${formattedQuestion}". Response format: "Time Complexity: O(n)" - ONLY the Big O notation, no explanation.`;
                 }
                 if (userContext) {
-                    prompt += ` Additional context: "${userContext}".`;
+                    prompt += ` Context: "${userContext}".`;
                 }
-                prompt += ` Time Complexity:`;
                 break;
 
             case 'space-complexity':
-                prompt = `I am working on the LeetCode problem titled "${formattedQuestion}".`;
-                if (userCode) {
-                    prompt += ` My current code attempt is:\n\`\`\`\n${userCode}\n\`\`\`\n`;
-                    prompt += `Analyze the space complexity of the provided code for this problem. Explain it concisely using Big O notation.`;
+                if (userCode && userCode.trim()) {
+                    prompt = `Code for "${formattedQuestion}":
+\`\`\`
+${userCode}
+\`\`\`
+
+Response format: "Space Complexity: O(1)" - ONLY the Big O notation, no explanation.`;
                 } else {
-                    prompt += ` What is the typical space complexity for solving the LeetCode problem "${formattedQuestion}"? Explain it concisely using Big O notation.`;
+                    prompt = `Problem: "${formattedQuestion}". Response format: "Space Complexity: O(n)" - ONLY the Big O notation, no explanation.`;
                 }
                 if (userContext) {
-                    prompt += ` Additional context: "${userContext}".`;
+                    prompt += ` Context: "${userContext}".`;
                 }
-                prompt += ` Space Complexity:`;
                 break;
 
             case 'chat': // General chat
             default:
-                prompt = `The user is asking a general question about the LeetCode problem "${formattedQuestion}". User's input: "${userContext}".`;
-                if (userCode) {
-                    prompt += ` They also provided their code: \n\`\`\`\n${userCode}\n\`\`\`\n`;
+                prompt = `Question about "${formattedQuestion}": "${userContext}".`;
+                if (userCode && userCode.trim()) {
+                    prompt += ` Code:
+\`\`\`
+${userCode}
+\`\`\`
+`;
                 }
-                prompt += ` Please respond concisely to their query.`;
+                prompt += ` Give a concise answer (max 15 words).`;
                 break;
         }
 
+        console.log('🤖 Sending prompt to AI...');
+        
         // Generate content using the AI model
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text(); // Extract the generated text hint
 
-        console.log('Successfully generated response:', text);
+        console.log('✅ AI Response received:', text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+        
         // Send the generated hint back to the client
         res.json({ hint: text }); // Still sending as 'hint' for consistency with frontend
     } catch (error) {
-        // Log the full error for debugging on the server side
-        console.error('Error details:', error);
+        // Enhanced error logging
+        console.error('❌ Error generating response:');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        if (error.stack) {
+            console.error('Stack trace:', error.stack);
+        }
+        
         // Send an error response to the client
         res.status(500).json({
             error: 'Error generating response', // More generic error message
