@@ -3,6 +3,8 @@
 <div align="center">
 
 ![CodeHint AI Banner](https://img.shields.io/badge/CodeHint%20AI-Smart%20Code%20Analysis-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K)
+<img width="1910" height="946" alt="image" src="https://github.com/user-attachments/assets/666a9a09-0557-4421-913c-d0ffb2d67430" />
+
 
 **Your Intelligent Coding Companion for Competitive Programming**
 
@@ -139,7 +141,7 @@ Before you begin, ensure you have:
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/CodeHint.git
+   git clone https://github.com/Ankitkr23/CodeHint.git
    cd CodeHint
    ```
 
