@@ -58,9 +58,19 @@ app.post('/get-hint', async (req, res) => {
         // Format question name for the prompt (e.g., "two-sum" becomes "two sum")
         const formattedQuestion = questionName.split('-').join(' ');
 
-        // Get the generative model
-        // Using gemini-1.5-flash as it was previously confirmed to be working
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Get the generative model with fallback options
+        let model;
+        let modelName = "gemini-1.5-flash";
+        
+        try {
+            model = genAI.getGenerativeModel({ model: modelName });
+        } catch (modelError) {
+            console.log('⚠️ Primary model unavailable, trying fallback...');
+            modelName = "gemini-pro";
+            model = genAI.getGenerativeModel({ model: modelName });
+        }
+        
+        console.log(`🤖 Using model: ${modelName}`);
 
         let prompt = '';
 
@@ -130,8 +140,31 @@ ${userCode}
 
         console.log('🤖 Sending prompt to AI...');
         
-        // Generate content using the AI model
-        const result = await model.generateContent(prompt);
+        // Generate content using the AI model with retry logic
+        let result;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+            try {
+                result = await model.generateContent(prompt);
+                break; // Success, exit retry loop
+            } catch (retryError) {
+                retryCount++;
+                console.log(`⚠️ Attempt ${retryCount} failed:`, retryError.message);
+                
+                if (retryError.message.includes('overloaded') || retryError.message.includes('503')) {
+                    if (retryCount < maxRetries) {
+                        const waitTime = retryCount * 2000; // Exponential backoff: 2s, 4s, 6s
+                        console.log(`⏳ Waiting ${waitTime/1000}s before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        continue;
+                    }
+                }
+                throw retryError; // Re-throw if not overload error or max retries reached
+            }
+        }
+        
         const response = await result.response;
         const text = response.text(); // Extract the generated text hint
 
@@ -148,10 +181,29 @@ ${userCode}
             console.error('Stack trace:', error.stack);
         }
         
+        // Provide user-friendly error messages based on error type
+        let userMessage = 'Error generating response';
+        let statusCode = 500;
+        
+        if (error.message.includes('overloaded') || error.message.includes('503')) {
+            userMessage = 'AI service is temporarily busy. Please try again in a few seconds.';
+            statusCode = 503;
+        } else if (error.message.includes('API key')) {
+            userMessage = 'Invalid API key. Please check your Gemini API key configuration.';
+            statusCode = 401;
+        } else if (error.message.includes('quota') || error.message.includes('limit')) {
+            userMessage = 'API quota exceeded. Please try again later or check your API limits.';
+            statusCode = 429;
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+            userMessage = 'Network error. Please check your internet connection.';
+            statusCode = 502;
+        }
+        
         // Send an error response to the client
-        res.status(500).json({
-            error: 'Error generating response', // More generic error message
-            details: error.message // Provide error details for debugging
+        res.status(statusCode).json({
+            error: userMessage,
+            details: error.message,
+            retryAfter: statusCode === 503 ? 5 : undefined // Suggest retry after 5 seconds for overload
         });
     }
 });
